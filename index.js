@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import connectDB from './db/db.js';
-const app = express();
+import connectDB from './src/db/db.js';
+import app from './src/app.js';
 
 dotenv.config({path: './.env'});
 
@@ -14,4 +14,3 @@ connectDB()
     console.log("Failed to connect database || ERROR : ", err)
 })
 
-export default connectDB
