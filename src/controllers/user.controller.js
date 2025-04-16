@@ -43,25 +43,37 @@ const loginUser = async (req, res) => {
         if (!user) return res.status(404).json({ error: 'Invalid email or password' });
 
         let isPasswordCorrect = await user.isPasswordCorrect(password);
-        if (!isPasswordCorrect) return res.status(401).json({error: "Password is incorrect"});
+        if (!isPasswordCorrect) return res.status(401).json({ error: "Password is incorrect" });
+
+        let userData = {
+            _id: user._id,
+            email: user.email,
+            username: user.username,
+        }
 
         let token = jwt.sign(
             {
-                userId: user._id,
+                userId: user._id
             },
             process.env.JWT_SECRET
         );
 
         return res
-        .status(200)
-        .cookie("accessToken", token)
-        .json({
-            message: "User logges in successfuly",
-            user: user
-        });
+            .status(200)
+            .cookie("accessToken", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            })
+            .json({
+                message: "User logged in successfuly",
+                user: userData
+            });
 
     } catch (error) {
-        console.log('something went wrong while login || Error : ', error)
+        console.log('something went wrong while login || Error : ', error);
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
