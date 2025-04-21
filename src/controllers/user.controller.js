@@ -2,32 +2,39 @@ import { User } from "../models/user.model.js";
 import jwt from 'jsonwebtoken';
 
 const registerUser = async (req, res) => {
-    let { username, email, password } = req.body;
+    try {
 
-    if ([username, email, password].some((field) => !field?.trim())) {
-        return res.status(400).json({ error: "Everyfield is required" });
+        let { username, email, password } = req.body;
+
+        if ([username, email, password].some((field) => !field?.trim())) {
+            return res.status(400).json({ error: "Everyfield is required" });
+            ;
+        };
+
+        let existedUser = await User.findOne({
+            $or: [{ username, email }]
+        });
+        User.up
+
+        if (existedUser) return res.status(400).json({ error: "Username or email already registered" });
         ;
-    };
 
-    let existedUser = await User.findOne({
-        $or: [{ username, email }]
-    });
-    User.up
+        let user = await User.create({
+            username,
+            email,
+            password,
+        });
 
-    if (existedUser) return res.status(400).json({ error: "Username or email already registered" });
-    ;
+        let createdUser = await User.findById(user._id).select("-password");
 
-    let user = await User.create({
-        username,
-        email,
-        password,
-    });
+        if (!createdUser) return res.status(404).json({ error: "Something went wrong while registering the user" });
 
-    let createdUser = await User.findById(user._id).select("-password");
+        return res.send(createdUser);
 
-    if (!createdUser) return res.status(404).json({ error: "Something went wrong while registering the user" });
-
-    return res.send(createdUser)
+    } catch (error) {
+        console.log("Something went wrong while registering user || User :", error);
+        return res.status(400).json({ error: "Failed to register user" });
+    }
 };
 
 const loginUser = async (req, res) => {
@@ -77,13 +84,23 @@ const loginUser = async (req, res) => {
     }
 }
 
+const logoutUser = async (req, res) => {
+    try {
+        res.clearCookie('accessToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // for HTTPS in prod
+            sameSite: 'strict',
+        })
 
-// rgister user 
-// login 
-// logout
-// jwt - middleware 
+        return res.status(200).json({ message: "User logged out successfully" })
+    } catch (error) {
+        console.log("Error while logging out", error);
+        return res.status(500).json({ error: "Internal server error" })
+    }
+}
 
 export {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser,
 }
