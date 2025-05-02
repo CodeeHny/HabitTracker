@@ -2,26 +2,33 @@ import mongoose from "mongoose";
 
 const habitSchema = mongoose.Schema({
     title: {
-        Type: String,
+        type: String,
         required: true,
-        unique: true,
+    },
+    description: {
+        type: String,
+        default: ' ',
+    },
+    targetDays: {
+        type: Number,
+        default: 21,
     },
     createdBy: {
-        Type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
     },
     isActive: {
-        Type: Boolean,
+        type: Boolean,
         default: false,
     },
     streak: {
-        Type: Number,
+        type: Number,
         default: 0,
     },
     habitLog: [
         {
-            Type: Date,
+            type: Date,
         }
     ],
 }, { timestamps: true });

@@ -19,6 +19,12 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    habits: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Habit'
+        }
+    ]
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
