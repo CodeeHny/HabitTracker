@@ -31,6 +31,8 @@ const habitSchema = mongoose.Schema({
             type: Date,
         }
     ],
+    longestStreak: { type: Number, default: 0 },
+    lastCompleted: { type: Date }
 }, { timestamps: true });
 
 export const Habit = mongoose.model('Habit', habitSchema);

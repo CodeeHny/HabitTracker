@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { Habit } from "../models/habit.model.js";
 import { User } from "../models/user.model.js";
+import { HabitCompletion } from "../models/habitCompletion.model.js";
+import moment from "moment";
 
 const createHabit = async (req, res) => {
     try {
@@ -102,8 +104,51 @@ const updateHabit = async (req, res) => {
     }
 }
 
+const completeHabit = async (req, res) => {
+  try {
+    const habitId = req.params.habitId;
+    const userId = req.user._id;
+    const today = moment().startOf('day').toDate();
+
+    const alreadyDone = await HabitCompletion.findOne({ habitId, userId, date: today });
+    if (alreadyDone) {
+      return res.status(400).json({ message: "Habit already marked as done today" });
+    }
+
+    await HabitCompletion.create({ habitId, userId, date: today });
+
+    const habit = await Habit.findById(habitId);
+    if (!habit) {
+      return res.status(404).json({ message: "Habit not found" });
+    }
+
+    const yesterday = moment(today).subtract(1, 'day').toDate();
+    const last = habit.lastCompleted ? moment(habit.lastCompleted).startOf('day').toDate() : null;
+
+    if (last && moment(last).isSame(yesterday)) {
+      habit.currentStreak += 1;
+    } else {
+      habit.currentStreak = 1;
+    }
+
+    habit.longestStreak = Math.max(habit.longestStreak, habit.currentStreak);
+
+    habit.lastCompleted = today;
+
+    await habit.save();
+
+    res.status(200).json({ message: "Habit marked as done", habit });
+
+  } catch (error) {
+    console.log('Error while marking habit:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 export {
     createHabit,
     deleteHabit,
-    updateHabit
+    updateHabit,
+    completeHabit,
 }
